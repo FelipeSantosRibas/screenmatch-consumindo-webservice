@@ -1,5 +1,6 @@
 package br.com.alura.screenmatch.principal;
 
+import br.com.alura.screenmatch.excecao.ErroDeConversaoDeAnoException;
 import br.com.alura.screenmatch.modelos.Titulo;
 import br.com.alura.screenmatch.modelos.TituloOmdb;
 import com.google.gson.FieldNamingPolicy;
@@ -16,32 +17,56 @@ import java.util.Scanner;
 public class PrincipalComBusca {
     public static void main(String[] args) throws IOException, InterruptedException {
         // Criando Scanner
-        Scanner in = new Scanner(System.in);
+        Scanner scan = new Scanner(System.in);
 
-        // Recebendo valores
-        System.out.println("Qual filme deseja buscar?");
-        String nome = in.nextLine().replace(' ','+');
-        System.out.println("Qual o ano do filme que deseja buscar (deixe nulo para não especificar)?");
-        String ano = in.nextLine();
+        String in = "";
 
-        // Protocolo HTTP
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create("https://www.omdbapi.com/?t="+nome+(ano.isBlank()?"":("&y="+ano))+"&apikey=6585022c")) // Especificar ano é opcional
-                .build();
-        HttpResponse<String> response = client
-                .send(request, HttpResponse.BodyHandlers.ofString());
+        do {
 
-        System.out.println(response.body()); // Imprime a resposta da API
+            // Recebendo valores
+            System.out.println("Qual filme deseja buscar (digite \"sair\" para finalizar)?");
+            String nome = scan.nextLine().replaceAll(" ", "+");
+            if (nome.equalsIgnoreCase("sair")){
+                break;
+            }
+            System.out.println("Qual o ano do filme que deseja buscar (deixe nulo para não especificar)?");
+            String ano = scan.nextLine();
+            if (ano.equalsIgnoreCase("sair")){
+                break;
+            }
 
-        Gson gson = new GsonBuilder() // Biblioteca do google para tratamendo de JSON
-                .setFieldNamingPolicy(FieldNamingPolicy.UPPER_CAMEL_CASE)
-                .create();
+            try {
 
-        TituloOmdb meuTituloOmdb = gson.fromJson(response.body(), TituloOmdb.class);
-        System.out.println(meuTituloOmdb);
+                // Protocolo HTTP
+                HttpClient client = HttpClient.newHttpClient();
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create("https://www.omdbapi.com/?t=" + nome + (ano.isBlank() ? "" : ("&y=" + ano)) + "&apikey=6585022c")) // Especificar ano é opcional
+                        .build();
+                HttpResponse<String> response = client
+                        .send(request, HttpResponse.BodyHandlers.ofString());
 
-        Titulo meuTitulo = new Titulo(meuTituloOmdb);
-        System.out.println(meuTitulo);
+                System.out.println(response.body()); // Imprime a resposta da API
+
+                Gson gson = new GsonBuilder() // Biblioteca do google para tratamendo de JSON
+                        .setFieldNamingPolicy(FieldNamingPolicy.UPPER_CAMEL_CASE)
+                        .create();
+
+                TituloOmdb meuTituloOmdb = gson.fromJson(response.body(), TituloOmdb.class);
+                System.out.println(meuTituloOmdb);
+
+                Titulo meuTitulo = new Titulo(meuTituloOmdb);
+                System.out.println("Título convertido de JSON para objeto Java");
+                System.out.println(meuTitulo);
+            } catch (NumberFormatException e) {
+                System.out.println("Aconteceu um erro: ");
+                System.out.println(e.getMessage());
+            } catch (ErroDeConversaoDeAnoException e) {
+                System.out.println(e.getMessage());
+            } catch (Exception e) {
+                System.out.println("Algo deu errado");
+            }
+
+        } while (!in.equalsIgnoreCase("sair"));
+        System.out.println("Programa Finalizado!");
     }
 }
