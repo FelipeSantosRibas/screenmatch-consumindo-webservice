@@ -7,19 +7,26 @@ import com.google.gson.FieldNamingPolicy;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
 public class PrincipalComBusca {
     public static void main(String[] args) throws IOException, InterruptedException {
         // Criando Scanner
         Scanner scan = new Scanner(System.in);
+        List<Titulo> titulos = new ArrayList<>();
 
-        String in = "";
+        Gson gson = new GsonBuilder() // Biblioteca do google para tratamendo de JSON
+                .setFieldNamingPolicy(FieldNamingPolicy.UPPER_CAMEL_CASE)
+                .setPrettyPrinting()
+                .create();
 
         do {
 
@@ -47,9 +54,6 @@ public class PrincipalComBusca {
 
                 System.out.println(response.body()); // Imprime a resposta da API
 
-                Gson gson = new GsonBuilder() // Biblioteca do google para tratamendo de JSON
-                        .setFieldNamingPolicy(FieldNamingPolicy.UPPER_CAMEL_CASE)
-                        .create();
 
                 TituloOmdb meuTituloOmdb = gson.fromJson(response.body(), TituloOmdb.class);
                 System.out.println(meuTituloOmdb);
@@ -57,6 +61,8 @@ public class PrincipalComBusca {
                 Titulo meuTitulo = new Titulo(meuTituloOmdb);
                 System.out.println("Título convertido de JSON para objeto Java");
                 System.out.println(meuTitulo);
+
+                titulos.add(meuTitulo);
             } catch (NumberFormatException e) {
                 System.out.println("Aconteceu um erro: ");
                 System.out.println(e.getMessage());
@@ -66,7 +72,13 @@ public class PrincipalComBusca {
                 System.out.println("Algo deu errado");
             }
 
-        } while (!in.equalsIgnoreCase("sair"));
+        } while (true);
         System.out.println("Programa Finalizado!");
+        System.out.println("Lista de Títulos: "+titulos);
+
+        FileWriter writer = new FileWriter("filmes.json");
+        writer.write(gson.toJson(titulos));
+        writer.close();
+        System.out.println();
     }
 }
